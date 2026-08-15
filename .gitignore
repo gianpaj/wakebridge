@@ -1,0 +1,16 @@
+.DS_Store
+.idea/
+.gradle/
+**/build/
+local.properties
+*.iml
+*.apk
+*.aab
+
+# Local configuration and credentials
+*.env
+!*.env.example
+
+# Local server binaries
+/server-go/bin/
+/server-go/gianrtx-wake-server
