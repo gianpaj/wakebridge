@@ -1,9 +1,9 @@
-# Go wake server
+# WakeBridge server
 
-`server-go` is the Jetson-side service. It accepts one authenticated operation,
-builds a Wake-on-LAN magic packet for the configured gianRTX MAC address, and
-sends that packet to the configured LAN broadcast address. It has no database,
-web framework, command runner, or client-selectable target.
+`server-go` is WakeBridge's Jetson-side service. It accepts one authenticated
+operation, builds a Wake-on-LAN magic packet for the configured gianRTX MAC
+address, and sends that packet to the configured LAN broadcast address. It has
+no database, web framework, command runner, or client-selectable target.
 
 ## Requirements
 
@@ -20,19 +20,19 @@ Run native tests and build from this directory:
 
 ```bash
 go test ./...
-go build -trimpath -o bin/gianrtx-wake-server ./cmd/wake-server
+go build -trimpath -o bin/wakebridge-server ./cmd/wakebridge-server
 ```
 
 Cross-compile a static Linux ARM64 binary from macOS or another Go host:
 
 ```bash
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
-  go build -trimpath -o bin/gianrtx-wake-server-linux-arm64 ./cmd/wake-server
+  go build -trimpath -o bin/wakebridge-server-linux-arm64 ./cmd/wakebridge-server
 ```
 
 ## Configuration
 
-Copy `examples/wake-server.env.example` to a local file and set:
+Copy `examples/wakebridge.env.example` to a local file and set:
 
 | Variable | Required | Meaning |
 | --- | --- | --- |
@@ -60,25 +60,25 @@ the public hostname, gianRTX hostname, or phone-supplied data as the UDP target.
 Build on the Jetson or copy the Linux ARM64 binary to it. Then run:
 
 ```bash
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin gianrtx-wake
-sudo install -m 0755 bin/gianrtx-wake-server-linux-arm64 \
-  /usr/local/bin/gianrtx-wake-server
-sudo install -m 0600 examples/wake-server.env.example /etc/gianrtx-wake.env
-sudo install -m 0644 deploy/gianrtx-wake.service \
-  /etc/systemd/system/gianrtx-wake.service
-sudoedit /etc/gianrtx-wake.env
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin wakebridge
+sudo install -m 0755 bin/wakebridge-server-linux-arm64 \
+  /usr/local/bin/wakebridge-server
+sudo install -m 0600 examples/wakebridge.env.example /etc/wakebridge.env
+sudo install -m 0644 deploy/wakebridge.service \
+  /etc/systemd/system/wakebridge.service
+sudoedit /etc/wakebridge.env
 sudo systemctl daemon-reload
-sudo systemctl enable --now gianrtx-wake.service
+sudo systemctl enable --now wakebridge.service
 ```
 
 The environment file may remain owned by root because systemd reads it before
-starting the service as `gianrtx-wake`.
+starting the service as `wakebridge`.
 
 Check the service and follow its structured logs:
 
 ```bash
-systemctl status gianrtx-wake.service
-journalctl -u gianrtx-wake -f
+systemctl status wakebridge.service
+journalctl -u wakebridge -f
 ```
 
 ## Local checks

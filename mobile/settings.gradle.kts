@@ -14,6 +14,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "gianrtx-wake-mobile"
+rootProject.name = "wakebridge-mobile"
 include(":shared")
 include(":androidApp")

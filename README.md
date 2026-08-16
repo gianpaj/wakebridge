@@ -1,9 +1,11 @@
-# gianRTX Wake
+# WakeBridge
 
-gianRTX Wake turns one authenticated phone tap into one Wake-on-LAN request for
-a single computer. A small Go service runs continuously on a Jetson Nano. An
-Android app and home-screen widget reach that service through Cloudflare Access
-and Cloudflare Tunnel.
+A self-hosted Android button and widget for securely waking a PC from anywhere.
+
+WakeBridge turns one authenticated phone tap into one Wake-on-LAN request for a
+single computer. A small Go service runs continuously on a Jetson Nano. The
+Android app and home-screen widget reach it through Cloudflare Access and
+Cloudflare Tunnel.
 
 ```text
 Android app or widget
@@ -14,7 +16,7 @@ Cloudflare Access and Tunnel
         │
         │ HTTP over the tunnel to 127.0.0.1:8787
         ▼
-Jetson Nano: Go wake server
+Jetson Nano: WakeBridge server
         │
         │ UDP Wake-on-LAN magic packet
         ▼
@@ -118,7 +120,7 @@ that support magic-packet wake.
    address. Confirm the desired power state keeps the adapter ready to wake.
 2. Build and install the Go service on the Jetson. Set a long random
    `WAKE_API_TOKEN`, the gianRTX MAC, and the Jetson subnet's broadcast address.
-   Enable `gianrtx-wake.service` at boot.
+   Enable `wakebridge.service` at boot.
 3. Verify `curl http://127.0.0.1:8787/health` on the Jetson, then make one local
    authenticated `/wake` request and confirm that the hardware wakes.
 4. Install and run `cloudflared` separately. Route a dedicated hostname to
@@ -126,9 +128,9 @@ that support magic-packet wake.
    service token for the Android client when the policy requires one.
 5. Build and install the Android app. Enter the HTTPS hostname, Cloudflare
    credentials, and Wake API token. Tap **Test Connection** and add the
-   **gianRTX Wake** home-screen widget.
+   **WakeBridge** home-screen widget.
 6. Disable phone Wi-Fi and any VPN. On cellular data, tap the widget once. Check
-   `journalctl -u gianrtx-wake -f` for one successful request and confirm that
+   `journalctl -u wakebridge -f` for one successful request and confirm that
    gianRTX powers on.
 
 See [server-go/README.md](server-go/README.md) for Jetson installation and
@@ -142,7 +144,7 @@ Server:
 ```bash
 cd server-go
 go test ./...
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build ./cmd/wake-server
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build ./cmd/wakebridge-server
 ```
 
 Mobile:

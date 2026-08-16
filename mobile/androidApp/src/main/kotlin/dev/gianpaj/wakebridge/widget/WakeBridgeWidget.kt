@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.widget
+package dev.gianpaj.wakebridge.widget
 
 import android.content.Context
 import android.content.Intent
@@ -30,8 +30,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import dev.gianpaj.gianrtxwake.MainActivity
-import dev.gianpaj.gianrtxwake.storage.SecureConfigurationStore
+import dev.gianpaj.wakebridge.MainActivity
+import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
 
 internal val widgetStatusKey = stringPreferencesKey("wake_status")
 
@@ -43,7 +43,7 @@ enum class WidgetStatus(val label: String) {
     SETUP_REQUIRED("Setup required"),
 }
 
-class GianRtxWakeWidget : GlanceAppWidget() {
+class WakeBridgeWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -59,8 +59,8 @@ class GianRtxWakeWidget : GlanceAppWidget() {
     }
 }
 
-class GianRtxWakeWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = GianRtxWakeWidget()
+class WakeBridgeWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = WakeBridgeWidget()
 }
 
 @Composable

@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.ui
+package dev.gianpaj.wakebridge.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +44,7 @@ fun WakeScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center,
         ) {
-            Text("gianRTX Wake", style = MaterialTheme.typography.headlineMedium)
+            Text("WakeBridge", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(24.dp))
 
             if (state.isEditing) {

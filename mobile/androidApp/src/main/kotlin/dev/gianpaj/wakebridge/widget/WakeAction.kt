@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.widget
+package dev.gianpaj.wakebridge.widget
 
 import android.content.Context
 import android.os.SystemClock
@@ -12,7 +12,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import dev.gianpaj.gianrtxwake.storage.SecureConfigurationStore
+import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
 
 class WakeAction : ActionCallback {
     override suspend fun onAction(
@@ -22,13 +22,13 @@ class WakeAction : ActionCallback {
     ) {
         if (SecureConfigurationStore(context).load() == null) {
             setWidgetStatus(context, glanceId, WidgetStatus.SETUP_REQUIRED)
-            GianRtxWakeWidget().update(context, glanceId)
+            WakeBridgeWidget().update(context, glanceId)
             return
         }
         if (!WidgetWakeGate.tryAcquire(context)) return
 
         setWidgetStatus(context, glanceId, WidgetStatus.SENDING)
-        GianRtxWakeWidget().update(context, glanceId)
+        WakeBridgeWidget().update(context, glanceId)
 
         val request = OneTimeWorkRequestBuilder<WakeWorker>()
             .setConstraints(
@@ -45,12 +45,12 @@ class WakeAction : ActionCallback {
     }
 
     private companion object {
-        const val UNIQUE_WORK_NAME = "gianrtx-widget-wake"
+        const val UNIQUE_WORK_NAME = "wakebridge-widget-wake"
     }
 }
 
 private object WidgetWakeGate {
-    private const val PREFERENCES = "gianrtx_widget_runtime"
+    private const val PREFERENCES = "wakebridge_widget_runtime"
     private const val LAST_TAP = "last_wake_tap_elapsed_time"
     private const val COOLDOWN_MILLIS = 2_000L
     private val lock = Any()

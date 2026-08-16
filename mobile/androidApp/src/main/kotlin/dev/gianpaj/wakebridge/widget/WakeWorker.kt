@@ -1,13 +1,13 @@
-package dev.gianpaj.gianrtxwake.widget
+package dev.gianpaj.wakebridge.widget
 
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import dev.gianpaj.gianrtxwake.shared.ApiResult
-import dev.gianpaj.gianrtxwake.shared.WakeApiFactory
-import dev.gianpaj.gianrtxwake.storage.SecureConfigurationStore
+import dev.gianpaj.wakebridge.shared.ApiResult
+import dev.gianpaj.wakebridge.shared.WakeApiFactory
+import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
 
 class WakeWorker(
     appContext: Context,
@@ -36,8 +36,8 @@ class WakeWorker(
 
     private suspend fun updateWidgets(status: WidgetStatus) {
         val manager = GlanceAppWidgetManager(applicationContext)
-        val widget = GianRtxWakeWidget()
-        manager.getGlanceIds(GianRtxWakeWidget::class.java).forEach { glanceId ->
+        val widget = WakeBridgeWidget()
+        manager.getGlanceIds(WakeBridgeWidget::class.java).forEach { glanceId ->
             updateAppWidgetState(
                 applicationContext,
                 glanceId,

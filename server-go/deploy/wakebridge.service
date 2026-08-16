@@ -1,14 +1,14 @@
 [Unit]
-Description=gianRTX Wake-on-LAN server
+Description=WakeBridge Wake-on-LAN server
 Wants=network-online.target
 After=network-online.target
 
 [Service]
 Type=simple
-User=gianrtx-wake
-Group=gianrtx-wake
-EnvironmentFile=/etc/gianrtx-wake.env
-ExecStart=/usr/local/bin/gianrtx-wake-server
+User=wakebridge
+Group=wakebridge
+EnvironmentFile=/etc/wakebridge.env
+ExecStart=/usr/local/bin/wakebridge-server
 Restart=on-failure
 RestartSec=5s
 

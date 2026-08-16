@@ -18,7 +18,7 @@ kotlin {
 
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         binaries.framework {
-            baseName = "WakeShared"
+            baseName = "WakeBridgeShared"
             isStatic = true
         }
     }
@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.gianpaj.gianrtxwake.shared"
+    namespace = "dev.gianpaj.wakebridge.shared"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1

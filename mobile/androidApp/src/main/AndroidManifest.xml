@@ -3,14 +3,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".WakeApplication"
+        android:name=".WakeBridgeApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.GianRtxWake"
+        android:theme="@style/Theme.WakeBridge"
         android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
@@ -22,14 +22,14 @@
         </activity>
 
         <receiver
-            android:name=".widget.GianRtxWakeWidgetReceiver"
+            android:name=".widget.WakeBridgeWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/gianrtx_wake_widget_info" />
+                android:resource="@xml/wakebridge_widget_info" />
         </receiver>
     </application>
 </manifest>

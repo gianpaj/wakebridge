@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gianpaj/wake-on-lan-button/server-go/internal/config"
-	"github.com/gianpaj/wake-on-lan-button/server-go/internal/httpapi"
-	"github.com/gianpaj/wake-on-lan-button/server-go/internal/wol"
+	"github.com/gianpaj/wakebridge/server-go/internal/config"
+	"github.com/gianpaj/wakebridge/server-go/internal/httpapi"
+	"github.com/gianpaj/wakebridge/server-go/internal/wol"
 )
 
 func main() {

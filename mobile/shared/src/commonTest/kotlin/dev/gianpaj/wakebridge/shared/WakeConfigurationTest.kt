@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.shared
+package dev.gianpaj.wakebridge.shared
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

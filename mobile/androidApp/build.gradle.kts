@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.gianpaj.gianrtxwake"
+    namespace = "dev.gianpaj.wakebridge"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.gianpaj.gianrtxwake"
+        applicationId = "dev.gianpaj.wakebridge"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

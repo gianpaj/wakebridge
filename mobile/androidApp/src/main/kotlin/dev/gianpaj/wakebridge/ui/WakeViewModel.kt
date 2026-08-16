@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.ui
+package dev.gianpaj.wakebridge.ui
 
 import android.app.Application
 import androidx.glance.appwidget.updateAll
@@ -6,15 +6,15 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import dev.gianpaj.gianrtxwake.shared.ApiError
-import dev.gianpaj.gianrtxwake.shared.ApiResult
-import dev.gianpaj.gianrtxwake.shared.ConfigurationError
-import dev.gianpaj.gianrtxwake.shared.ConfigurationValidation
-import dev.gianpaj.gianrtxwake.shared.WakeApiFactory
-import dev.gianpaj.gianrtxwake.shared.WakeConfiguration
-import dev.gianpaj.gianrtxwake.shared.validate
-import dev.gianpaj.gianrtxwake.storage.SecureConfigurationStore
-import dev.gianpaj.gianrtxwake.widget.GianRtxWakeWidget
+import dev.gianpaj.wakebridge.shared.ApiError
+import dev.gianpaj.wakebridge.shared.ApiResult
+import dev.gianpaj.wakebridge.shared.ConfigurationError
+import dev.gianpaj.wakebridge.shared.ConfigurationValidation
+import dev.gianpaj.wakebridge.shared.WakeApiFactory
+import dev.gianpaj.wakebridge.shared.WakeConfiguration
+import dev.gianpaj.wakebridge.shared.validate
+import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
+import dev.gianpaj.wakebridge.widget.WakeBridgeWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,7 +103,7 @@ class WakeViewModel(
                         isEditing = false,
                         message = "Connected",
                     )
-                    GianRtxWakeWidget().updateAll(getApplication())
+                    WakeBridgeWidget().updateAll(getApplication())
                 } catch (_: Exception) {
                     _state.update {
                         it.copy(isBusy = false, message = "Could not save configuration")

@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">gianRTX Wake</string>
-    <string name="widget_description">Wake gianRTX from the home screen</string>
+    <string name="app_name">WakeBridge</string>
+    <string name="widget_description">Securely wake gianRTX from anywhere</string>
 </resources>

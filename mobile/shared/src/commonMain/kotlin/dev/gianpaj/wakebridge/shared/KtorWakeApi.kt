@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.shared
+package dev.gianpaj.wakebridge.shared
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

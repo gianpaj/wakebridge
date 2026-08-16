@@ -1,9 +1,9 @@
-package dev.gianpaj.gianrtxwake
+package dev.gianpaj.wakebridge
 
 import android.app.Application
-import dev.gianpaj.gianrtxwake.storage.SecureConfigurationStore
+import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
 
-class WakeApplication : Application() {
+class WakeBridgeApplication : Application() {
     val configurationStore: SecureConfigurationStore by lazy {
         SecureConfigurationStore(applicationContext)
     }

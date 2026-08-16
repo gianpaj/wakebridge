@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct GianRTXWakeApp: App {
+struct WakeBridgeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

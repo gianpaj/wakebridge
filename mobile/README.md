@@ -1,8 +1,8 @@
-# Mobile app
+# WakeBridge mobile
 
-`mobile` is an independent Kotlin Multiplatform project. Android is the complete
-v1 target; iOS has a shared framework target and a small SwiftUI placeholder.
-The mobile build does not invoke or package the Go server.
+`mobile` is WakeBridge's independent Kotlin Multiplatform project. Android is
+the complete v1 target; iOS has a shared framework target and a small SwiftUI
+placeholder. The mobile build does not invoke or package the Go server.
 
 ## Structure
 
@@ -85,7 +85,7 @@ does not log URLs, tokens, client IDs, client secrets, or authorization headers.
 
 ## Home-screen widget
 
-Add **gianRTX Wake** from the Android widget picker after installing the app.
+Add **WakeBridge** from the Android widget picker after installing the app.
 
 - Before a successful connection test, the widget says **Setup required** and
   opens the app.
@@ -109,11 +109,12 @@ transport failure, and malformed responses into small shared error types.
 
 ## iOS status
 
-The shared module builds static `WakeShared` frameworks for physical devices
-and Apple Silicon simulators. The SwiftUI files under `iosApp` are placeholders;
-v1 does not include an Xcode project, Keychain adapter, configuration UI, or
-WidgetKit extension. Those components can reuse the shared validation and Ktor
-API instead of rewriting the wire contract.
+The shared module builds static `WakeBridgeShared` frameworks for physical
+devices and Apple Silicon simulators. The SwiftUI files under
+`iosApp/WakeBridge` are placeholders; v1 does not include an Xcode project,
+Keychain adapter, configuration UI, or WidgetKit extension. Those components
+can reuse the shared validation and Ktor API instead of rewriting the wire
+contract.
 
 ## Physical acceptance test
 

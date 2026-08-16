@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake
+package dev.gianpaj.wakebridge
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,12 +10,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.gianpaj.gianrtxwake.ui.WakeScreen
-import dev.gianpaj.gianrtxwake.ui.WakeViewModel
+import dev.gianpaj.wakebridge.ui.WakeScreen
+import dev.gianpaj.wakebridge.ui.WakeViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: WakeViewModel by viewModels {
-        val application = application as WakeApplication
+        val application = application as WakeBridgeApplication
         WakeViewModel.Factory(application, application.configurationStore)
     }
 

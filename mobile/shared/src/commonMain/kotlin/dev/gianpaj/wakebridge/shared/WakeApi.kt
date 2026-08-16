@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.shared
+package dev.gianpaj.wakebridge.shared
 
 data class HealthResult(val ok: Boolean)
 

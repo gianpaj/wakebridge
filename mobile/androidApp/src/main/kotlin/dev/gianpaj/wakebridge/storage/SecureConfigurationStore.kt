@@ -1,4 +1,4 @@
-package dev.gianpaj.gianrtxwake.storage
+package dev.gianpaj.wakebridge.storage
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
@@ -6,9 +6,9 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.util.Log
 import androidx.core.content.edit
-import dev.gianpaj.gianrtxwake.shared.ConfigurationValidation
-import dev.gianpaj.gianrtxwake.shared.WakeConfiguration
-import dev.gianpaj.gianrtxwake.shared.validate
+import dev.gianpaj.wakebridge.shared.ConfigurationValidation
+import dev.gianpaj.wakebridge.shared.WakeConfiguration
+import dev.gianpaj.wakebridge.shared.validate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -90,10 +90,10 @@ class SecureConfigurationStore(context: Context) {
 
     private companion object {
         const val TAG = "SecureConfigStore"
-        const val PREFERENCES_NAME = "gianrtx_secure_configuration"
+        const val PREFERENCES_NAME = "wakebridge_secure_configuration"
         const val CONFIGURATION_KEY = "encrypted_configuration"
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        const val KEY_ALIAS = "gianrtx_wake_configuration_key"
+        const val KEY_ALIAS = "wakebridge_configuration_key"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val TAG_LENGTH_BITS = 128
         val json = Json { ignoreUnknownKeys = false }
