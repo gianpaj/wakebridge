@@ -15,16 +15,22 @@ type Waker interface {
 	Wake(context.Context) error
 }
 
+type Checker interface {
+	Online(context.Context) (bool, error)
+}
+
 type Handler struct {
+	checker   Checker
 	tokenHash [sha256.Size]byte
 	waker     Waker
 	logger    *slog.Logger
 }
 
-func NewHandler(token string, waker Waker, logger *slog.Logger) *Handler {
+func NewHandler(token string, waker Waker, checker Checker, logger *slog.Logger) *Handler {
 	return &Handler{
 		tokenHash: sha256.Sum256([]byte(token)),
 		waker:     waker,
+		checker:   checker,
 		logger:    logger,
 	}
 }
@@ -33,6 +39,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/health":
 		h.handleHealth(w, r)
+	case "/status":
+		h.handleStatus(w, r)
 	case "/wake":
 		h.handleWake(w, r)
 	default:
@@ -88,6 +96,30 @@ func (h *Handler) handleWake(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "target": "gianRTX"})
 	h.logRequest("wake successful", r.URL.Path, http.StatusOK, start)
+}
+
+func (h *Handler) handleStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"ok": false, "error": "method not allowed"})
+		return
+	}
+	if !h.authorized(r.Header.Get("Authorization")) {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "unauthorized"})
+		return
+	}
+	if h.checker == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": "status not configured"})
+		return
+	}
+	online, err := h.checker.Online(r.Context())
+	if err != nil {
+		h.logger.Error("status check failed", "error", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": "status check failed"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "target": "gianRTX", "online": online})
 }
 
 func (h *Handler) authorized(header string) bool {

@@ -14,6 +14,7 @@ const (
 )
 
 type Config struct {
+	SSHAddr    string
 	ListenAddr string
 	APIToken   string
 	MAC        net.HardwareAddr
@@ -49,8 +50,15 @@ func Load(getenv func(string) string) (Config, error) {
 	if listenAddr == "" {
 		listenAddr = defaultListenAddr
 	}
-	if err := validateListenAddr(listenAddr); err != nil {
+	if err := validateAddress(listenAddr); err != nil {
 		return Config{}, fmt.Errorf("LISTEN_ADDR: %w", err)
+	}
+
+	sshAddr := getenv("GIANRTX_SSH_ADDR")
+	if sshAddr != "" {
+		if err := validateAddress(sshAddr); err != nil {
+			return Config{}, fmt.Errorf("GIANRTX_SSH_ADDR: %w", err)
+		}
 	}
 
 	wolPort := defaultWOLPort
@@ -64,6 +72,7 @@ func Load(getenv func(string) string) (Config, error) {
 
 	return Config{
 		ListenAddr: listenAddr,
+		SSHAddr:    sshAddr,
 		APIToken:   token,
 		MAC:        append(net.HardwareAddr(nil), mac...),
 		Broadcast:  append(net.IP(nil), broadcast.To4()...),
@@ -71,12 +80,12 @@ func Load(getenv func(string) string) (Config, error) {
 	}, nil
 }
 
-func validateListenAddr(address string) error {
+func validateAddress(address string) error {
 	host, portText, err := net.SplitHostPort(address)
 	if err != nil {
 		return errors.New("must use host:port form")
 	}
-	if strings.TrimSpace(host) == "" {
+	if strings.TrimSpace(host) == "" || strings.ContainsAny(host, " \t\r\n/") {
 		return errors.New("host must not be empty")
 	}
 	port, err := strconv.Atoi(portText)

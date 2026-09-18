@@ -43,7 +43,7 @@ func TestHandlerRoutesAndAuthentication(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			waker := &fakeWaker{}
-			handler := NewHandler("secret", waker, discardLogger())
+			handler := NewHandler("secret", waker, nil, discardLogger())
 			request := httptest.NewRequest(tt.method, tt.path, nil)
 			if tt.token != "" {
 				request.Header.Set("Authorization", "Bearer "+tt.token)
@@ -67,7 +67,7 @@ func TestHandlerRoutesAndAuthentication(t *testing.T) {
 
 func TestHandlerReturnsServerErrorWhenWakeFails(t *testing.T) {
 	waker := &fakeWaker{err: errors.New("UDP unavailable")}
-	handler := NewHandler("secret", waker, discardLogger())
+	handler := NewHandler("secret", waker, nil, discardLogger())
 	request := httptest.NewRequest(http.MethodPost, "/wake", nil)
 	request.Header.Set("Authorization", "Bearer secret")
 	response := httptest.NewRecorder()
@@ -84,4 +84,57 @@ func TestHandlerReturnsServerErrorWhenWakeFails(t *testing.T) {
 
 func discardLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+type fakeChecker struct {
+	calls  int
+	online bool
+	err    error
+}
+
+func (f *fakeChecker) Online(context.Context) (bool, error) { f.calls++; return f.online, f.err }
+func TestStatus(t *testing.T) {
+	for _, tt := range []struct {
+		name, method, token string
+		configured, online  bool
+		err                 error
+		code, calls         int
+		body                string
+	}{
+		{name: "online", method: "GET", token: "secret", configured: true, online: true, code: 200, calls: 1, body: `"online":true`},
+		{name: "offline", method: "GET", token: "secret", configured: true, code: 200, calls: 1, body: `"online":false`},
+		{name: "missing bearer", method: "GET", configured: true, code: 401, body: `"error":"unauthorized"`},
+		{name: "wrong bearer", method: "GET", token: "wrong", configured: true, code: 401, body: `"error":"unauthorized"`},
+		{name: "wrong method", method: "POST", token: "secret", configured: true, code: 405, body: `"error":"method not allowed"`},
+		{name: "unconfigured", method: "GET", token: "secret", code: 503, body: `"error":"status not configured"`},
+		{name: "probe error", method: "GET", token: "secret", configured: true, err: errors.New("DNS failure"), code: 503, calls: 1, body: `"error":"status check failed"`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			waker := &fakeWaker{}
+			checker := &fakeChecker{online: tt.online, err: tt.err}
+			var probe Checker
+			if tt.configured {
+				probe = checker
+			}
+			handler := NewHandler("secret", waker, probe, discardLogger())
+			request := httptest.NewRequest(tt.method, "/status?target=other-host:22", nil)
+			if tt.token != "" {
+				request.Header.Set("Authorization", "Bearer "+tt.token)
+			}
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			if response.Code != tt.code || !strings.Contains(response.Body.String(), tt.body) {
+				t.Fatalf("response = %d %s", response.Code, response.Body.String())
+			}
+			if checker.calls != tt.calls || waker.calls != 0 {
+				t.Fatalf("probe calls=%d, wakes=%d", checker.calls, waker.calls)
+			}
+			if response.Header().Get("Cache-Control") != "no-store" {
+				t.Fatal("status must not be cached")
+			}
+			if tt.code == 405 && response.Header().Get("Allow") != "GET" {
+				t.Fatal("missing Allow header")
+			}
+		})
+	}
 }

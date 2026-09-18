@@ -14,6 +14,7 @@ import (
 
 	"github.com/gianpaj/wakebridge/server-go/internal/config"
 	"github.com/gianpaj/wakebridge/server-go/internal/httpapi"
+	"github.com/gianpaj/wakebridge/server-go/internal/probe"
 	"github.com/gianpaj/wakebridge/server-go/internal/wol"
 )
 
@@ -41,8 +42,13 @@ func run(logger *slog.Logger) error {
 		return fmt.Errorf("listen: %w", err)
 	}
 
+	var checker httpapi.Checker
+	if cfg.SSHAddr != "" {
+		checker = probe.New(cfg.SSHAddr)
+	}
+
 	server := &http.Server{
-		Handler:           httpapi.NewHandler(cfg.APIToken, sender, logger),
+		Handler:           httpapi.NewHandler(cfg.APIToken, sender, checker, logger),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
