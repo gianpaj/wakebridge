@@ -30,6 +30,7 @@ data class WakeUiState(
     val isEditing: Boolean = true,
     val isBusy: Boolean = true,
     val message: String? = null,
+    val isError: Boolean = false,
 )
 
 class WakeViewModel(
@@ -80,13 +81,13 @@ class WakeViewModel(
         if (_state.value.isBusy) return
         val validation = _state.value.configuration().validate()
         if (validation is ConfigurationValidation.Invalid) {
-            _state.update { it.copy(message = validation.reason.message()) }
+            _state.update { it.copy(message = validation.reason.message(), isError = true) }
             return
         }
         val configuration = (validation as ConfigurationValidation.Valid).configuration
 
         viewModelScope.launch {
-            _state.update { it.copy(isBusy = true, message = "Testing connection…") }
+            _state.update { it.copy(isBusy = true, message = null, isError = false) }
             val api = WakeApiFactory.create(configuration)
             val result = try {
                 api.healthCheck()
@@ -106,12 +107,12 @@ class WakeViewModel(
                     WakeBridgeWidget().updateAll(getApplication())
                 } catch (_: Exception) {
                     _state.update {
-                        it.copy(isBusy = false, message = "Could not save configuration")
+                        it.copy(isBusy = false, message = "Could not save configuration", isError = true)
                     }
                 }
             } else {
                 val failure = result as ApiResult.Failure
-                _state.update { it.copy(isBusy = false, message = failure.error.message()) }
+                _state.update { it.copy(isBusy = false, message = failure.error.message(), isError = true) }
             }
         }
     }
@@ -121,7 +122,7 @@ class WakeViewModel(
         if (_state.value.isBusy || _state.value.isEditing) return
 
         viewModelScope.launch {
-            _state.update { it.copy(isBusy = true, message = "Sending…") }
+            _state.update { it.copy(isBusy = true, message = "Sending…", isError = false) }
             val api = WakeApiFactory.create(configuration)
             val result = try {
                 api.wake()
@@ -131,6 +132,7 @@ class WakeViewModel(
             _state.update {
                 it.copy(
                     isBusy = false,
+                    isError = result is ApiResult.Failure,
                     message = when (result) {
                         is ApiResult.Success -> "Wake command sent"
                         is ApiResult.Failure -> result.error.message()
@@ -141,7 +143,7 @@ class WakeViewModel(
     }
 
     private fun edit(transform: WakeUiState.() -> WakeUiState) {
-        _state.update { it.transform().copy(message = null) }
+        _state.update { it.transform().copy(message = null, isError = false) }
     }
 
     private fun WakeUiState.configuration() = WakeConfiguration(
@@ -176,7 +178,9 @@ class WakeViewModel(
 
     private fun ApiError.message(): String = when (this) {
         is ApiError.InvalidConfiguration -> reason.message()
-        ApiError.CannotReachServer -> "Cannot reach server. Check the network and URL."
+        ApiError.CannotReachServer ->
+            "Cannot reach server. Check your connection and server URL. " +
+                "If you use Tailscale, make sure it is connected on this phone, then try again."
         ApiError.CloudflareAuthenticationFailed -> "Cloudflare authentication failed"
         ApiError.WakeTokenRejected -> "Wake API token was rejected"
         is ApiError.ServerRejected -> "Server rejected request (HTTP $status)"

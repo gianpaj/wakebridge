@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,6 +27,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +40,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -180,6 +185,7 @@ private fun ConfigurationForm(
             )
         }
     }
+    StatusMessage(state.message, state.isError)
     Spacer(Modifier.height(24.dp))
     Button(
         onClick = testConnection,
@@ -195,7 +201,6 @@ private fun ConfigurationForm(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    StatusMessage(state.message)
     if (state.hasTestedConfiguration) {
         Spacer(Modifier.height(12.dp))
         OutlinedButton(
@@ -261,7 +266,7 @@ private fun ReadyContent(
     ) {
         Text(if (state.isBusy) "Sending…" else "Wake gianRTX", style = MaterialTheme.typography.titleMedium)
     }
-    StatusMessage(state.message)
+    StatusMessage(state.message, state.isError)
     Spacer(Modifier.height(24.dp))
     Text(
         "For one-tap access, add the WakeBridge widget from your home screen's widget picker.",
@@ -279,13 +284,29 @@ private fun ReadyContent(
 }
 
 @Composable
-private fun StatusMessage(message: String?) {
+private fun StatusMessage(message: String?, isError: Boolean) {
     if (message == null) return
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(message, isError) {
+        if (isError) {
+            withFrameNanos { }
+            bringIntoViewRequester.bringIntoView()
+        }
+    }
     Spacer(Modifier.height(16.dp))
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = if (isError) MaterialTheme.colorScheme.errorContainer
+        else MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = if (isError) MaterialTheme.colorScheme.onErrorContainer
+        else MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+        modifier = Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .semantics {
+                liveRegion = LiveRegionMode.Polite
+                if (isError) error(message)
+            },
     ) {
         Text(message, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
     }

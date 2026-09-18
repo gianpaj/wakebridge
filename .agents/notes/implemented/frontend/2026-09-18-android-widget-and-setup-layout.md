@@ -28,5 +28,19 @@ Lint reports one SDK-target warning.
 On Pixel 6, verified the widget at 115% and 150% text size, tapping it to open
 setup, empty-form validation, scrolling, and portrait/landscape app layouts.
 The original 115% text size and landscape rotation lock were restored.
-No credentials were supplied and no wake request was sent; configured wake
-and server-response states still need end-to-end verification.
+Automated UI checks did not send a wake request. The user confirmed that
+the configured app wakes the computer over Tailscale.
+
+## Connection failure visibility
+
+Network errors already reached the view model, but the neutral status panel
+below the setup help text was easy to miss. Setup errors appear directly above
+the test button in an error-colored panel. BringIntoViewRequester reveals the
+panel after layout, and accessibility semantics mark it as an error. Retrying
+or editing clears the error state. Unreachable-server guidance names Tailscale
+as a connection to check without claiming the app detected its VPN state.
+
+Verified an unreachable tailnet URL on Pixel 6: the full error appeared without
+manual scrolling. The health check used a temporary token, which is not sent
+to /health; the token was cleared afterward. Debug build, lint, and existing
+shared tests passed. Installing the update resets unsaved setup fields.
