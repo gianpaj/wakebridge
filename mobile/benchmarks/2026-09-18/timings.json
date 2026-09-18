@@ -1,0 +1,85 @@
+{
+  "setup": {
+    "compile_ocr": 0.5750080840080045,
+    "warm_build": 0.5509270000038669,
+    "warm_adb": 0.021806125005241483,
+    "warm_agent": 0.9341264579852577,
+    "attempts": 1,
+    "settle": 0.2550442909996491,
+    "screenshot": 0.27280450001126155,
+    "validate": 0.5719134169921745
+  },
+  "runs": [
+    {
+      "backend": "adb",
+      "marker": "WakeBridge A1 184558",
+      "edit": 0.0001855409936979413,
+      "build": 1.6925588750164025,
+      "install": 5.058337041991763,
+      "launch": 0.15885579198948108,
+      "attempts": 5,
+      "settle": 1.272305791004328,
+      "screenshot": 1.7308377089793794,
+      "validate": 1.1351355830265675,
+      "passed": true,
+      "total": 11.05114512500586,
+      "device_loop": 9.355471916991519
+    },
+    {
+      "backend": "agent-device",
+      "marker": "WakeBridge D2 184558",
+      "edit": 0.00031704100547358394,
+      "build": 1.3625752079824451,
+      "install": 5.17199308401905,
+      "launch": 3.2727944159996696,
+      "attempts": 1,
+      "settle": 0.2550728749774862,
+      "screenshot": 0.3836342499998864,
+      "validate": 0.25176216699765064,
+      "passed": true,
+      "total": 10.699739875009982,
+      "device_loop": 9.335256791993743
+    },
+    {
+      "backend": "agent-device",
+      "marker": "WakeBridge D3 184558",
+      "edit": 0.0002539580164011568,
+      "build": 1.2711447500041686,
+      "install": 5.537090750003699,
+      "launch": 2.719122292008251,
+      "attempts": 1,
+      "settle": 0.2511388330021873,
+      "screenshot": 0.850630499975523,
+      "validate": 0.22514945900184102,
+      "passed": true,
+      "total": 10.855373167025391,
+      "device_loop": 9.583131833991501
+    },
+    {
+      "backend": "adb",
+      "marker": "WakeBridge A4 184558",
+      "edit": 0.00030899999546818435,
+      "build": 1.1760134589858353,
+      "install": 5.142344499996398,
+      "launch": 0.27773512501153164,
+      "attempts": 2,
+      "settle": 0.5101398749975488,
+      "screenshot": 0.7666819999867585,
+      "validate": 0.3724388330010697,
+      "passed": true,
+      "total": 8.247411374992225,
+      "device_loop": 7.069340332993306
+    }
+  ],
+  "restore": {
+    "build": 0.5847000420035329,
+    "install": 4.923630165983923,
+    "close_agent": 0.13369412499014288,
+    "launch": 1.7179427499941085,
+    "attempts": 1,
+    "settle": 0.2550862909993157,
+    "screenshot": 0.47423391600023024,
+    "validate": 0.21100333399954252
+  },
+  "failure": null
+}
