@@ -50,6 +50,22 @@ internal class KtorWakeApi(
         }
     }
 
+    override suspend fun status(): ApiResult<StatusResult> {
+        val validated = validatedConfiguration()
+        if (validated is ApiResult.Failure) return validated
+        val config = (validated as ApiResult.Success).value
+
+        return execute {
+            val response = client.get(config.endpoint("/status")) {
+                accept(ContentType.Application.Json)
+                header(HttpHeaders.Authorization, "Bearer ${config.wakeApiToken}")
+                header(HttpHeaders.CacheControl, "no-cache")
+                addCloudflareHeaders(config)
+            }
+            response.toStatusResult()
+        }
+    }
+
     override fun close() {
         client.close()
     }
@@ -123,6 +139,35 @@ internal class KtorWakeApi(
         }
     }
 
+    private suspend fun HttpResponse.toStatusResult(): ApiResult<StatusResult> {
+        if (status.isRedirect() || status == HttpStatusCode.Forbidden) {
+            return ApiResult.Failure(ApiError.CloudflareAuthenticationFailed)
+        }
+        if (status == HttpStatusCode.Unauthorized) {
+            return ApiResult.Failure(
+                if (decodeOrNull<ErrorResponse>()?.error == "unauthorized") {
+                    ApiError.WakeTokenRejected
+                } else {
+                    ApiError.CloudflareAuthenticationFailed
+                },
+            )
+        }
+        if (status == HttpStatusCode.ServiceUnavailable &&
+            decodeOrNull<ErrorResponse>()?.error == "status not configured"
+        ) {
+            return ApiResult.Failure(ApiError.StatusNotConfigured)
+        }
+        if (status != HttpStatusCode.OK) {
+            return ApiResult.Failure(ApiError.ServerRejected(status.value))
+        }
+        val payload = decodeOrNull<StatusResponse>()
+        return if (payload?.ok == true && payload.target == TARGET_NAME) {
+            ApiResult.Success(StatusResult(online = payload.online))
+        } else {
+            ApiResult.Failure(ApiError.UnexpectedResponse)
+        }
+    }
+
     private suspend inline fun <reified T> HttpResponse.decodeOrNull(): T? =
         try {
             json.decodeFromString<T>(body<String>())
@@ -145,6 +190,9 @@ internal class KtorWakeApi(
         val ok: Boolean,
         val target: String,
     )
+
+    @Serializable
+    private data class StatusResponse(val ok: Boolean, val target: String, val online: Boolean)
 
     @Serializable
     private data class ErrorResponse(

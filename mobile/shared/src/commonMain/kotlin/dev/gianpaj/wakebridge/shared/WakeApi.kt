@@ -1,5 +1,7 @@
 package dev.gianpaj.wakebridge.shared
 
+data class StatusResult(val online: Boolean)
+
 data class HealthResult(val ok: Boolean)
 
 data class WakeResult(
@@ -19,11 +21,13 @@ sealed interface ApiError {
     data object WakeTokenRejected : ApiError
     data class ServerRejected(val status: Int) : ApiError
     data object WakePacketFailed : ApiError
+    data object StatusNotConfigured : ApiError
     data object UnexpectedResponse : ApiError
 }
 
 interface WakeApi {
     suspend fun healthCheck(): ApiResult<HealthResult>
+    suspend fun status(): ApiResult<StatusResult>
     suspend fun wake(): ApiResult<WakeResult>
     fun close()
 }

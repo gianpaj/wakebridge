@@ -13,8 +13,8 @@ mobile/
 └── iosApp/       SwiftUI placeholder for later iOS and WidgetKit work
 ```
 
-The shared module accepts only a base server URL and credentials. It knows two
-operations: `healthCheck()` and `wake()`. It has no Android widget or storage
+The shared module accepts only a base server URL and credentials. It exposes
+`healthCheck()`, `wake()`, `status()`, and the `awaitOnline()` polling helper. It has no Android widget or storage
 dependency. Android owns the credential adapter, UI state, and home-screen
 widget.
 
@@ -68,9 +68,18 @@ gianRTX during setup. A successful response saves the normalized configuration
 and enables both wake buttons. Failed or invalid first-time setup leaves them
 disabled.
 
-After setup, the main screen sends `POST /wake` and reports **Wake command
-sent** only when the server accepts the request. This message does not claim
-that gianRTX is awake.
+After setup, the main screen sends `POST /wake`, shows **Waking gianRTX…**,
+and checks `/status` immediately, then two seconds after each offline response.
+Polling stops when the target is online, an API error occurs, or 90 seconds
+elapse, including time spent in requests. **gianRTX is online** means the
+configured TCP port accepted a connection. It does not verify SSH login or
+application readiness. Online is the last check's result, not continuous monitoring.
+
+A timeout says that gianRTX has not responded yet. A status API error says
+that the app could not check status, separately from failure to send the wake
+command. **Check again** repeats status polling without sending another wake
+packet. Set `GIANRTX_SSH_ADDR` on the Jetson to enable these checks; see the
+[server configuration](../server-go/README.md#configuration).
 
 ## Credential storage
 
@@ -94,7 +103,12 @@ text, and the widget can be resized in either direction.
 - After setup, one tap changes the widget to **Sending…** and enqueues one
   network-constrained WorkManager job.
 - The worker reads secure storage and sends one authenticated `POST /wake`.
-- Success leaves **Sent · wake again**; failure leaves **Failed · retry**.
+- After an accepted wake request, **Waking…** remains visible during polling.
+- A successful status check leaves **Online · wake again**. A timeout leaves
+  **No response · check again**; a status error leaves **Check failed · check
+  again**, or **Set up status · check again** when the address is not configured.
+- Tapping a check-again state only polls status. A failed wake request leaves
+  **Failed · retry**, which sends a wake request when tapped.
 
 Unique work plus a two-second tap gate ignores rapid duplicate taps. The worker
 does not retry a failed or ambiguous response because a retry could duplicate a
@@ -103,8 +117,8 @@ runs.
 
 ## Shared network behavior
 
-The Ktor client sends Cloudflare headers on both operations and adds the bearer
-token only to `/wake`. Redirect following is disabled so credentials cannot be
+The Ktor client sends Cloudflare headers on all operations and adds the bearer
+token to `/wake` and `/status`. Redirect following is disabled so credentials cannot be
 forwarded to another host. The client recognizes the exact successful JSON
 responses and converts redirects, authentication rejection, server failure,
 transport failure, and malformed responses into small shared error types.
@@ -124,3 +138,9 @@ Use a real Android phone for the final test. Complete setup, add the widget,
 disable Wi-Fi and any VPN, use cellular data, and tap once. Confirm one
 `wake successful` event in the Jetson journal and verify that gianRTX powers on
 from a supported state.
+
+For startup confirmation, verify that the app and widget progress from waking
+to online. Test an unreachable target, missing server probe configuration, and
+an invalid bearer token. Check-again taps must send only `/status` requests.
+The worker runs polling without opening the app; Android may defer or stop it
+under background execution constraints. Cancelling a poll closes its client.

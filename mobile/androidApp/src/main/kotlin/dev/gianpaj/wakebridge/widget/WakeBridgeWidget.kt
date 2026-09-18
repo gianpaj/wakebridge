@@ -12,6 +12,7 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -47,6 +48,12 @@ enum class WidgetStatus(val label: String) {
     READY("Tap to wake"),
     SENDING("Sending…"),
     SENT("Sent · wake again"),
+    WAKING("Waking…"),
+    CHECKING("Checking…"),
+    ONLINE("Online · wake again"),
+    TIMED_OUT("No response · check again"),
+    CHECK_FAILED("Check failed · check again"),
+    NOT_CONFIGURED("Set up status · check again"),
     FAILED("Failed · retry"),
     SETUP_REQUIRED("Tap to set up"),
 }
@@ -77,9 +84,12 @@ private fun WidgetContent(
     status: WidgetStatus,
     setupAction: Action,
 ) {
-    val action = if (configured) actionRunCallback<WakeAction>() else setupAction
-    val isSending = configured && status == WidgetStatus.SENDING
-    val accent = if (configured && status == WidgetStatus.FAILED) {
+    val checkOnly = status in setOf(WidgetStatus.TIMED_OUT, WidgetStatus.CHECK_FAILED, WidgetStatus.NOT_CONFIGURED)
+    val action = if (configured) {
+        actionRunCallback<WakeAction>(actionParametersOf(checkOnlyParameter to checkOnly))
+    } else setupAction
+    val isSending = configured && status in setOf(WidgetStatus.SENDING, WidgetStatus.WAKING, WidgetStatus.CHECKING)
+    val accent = if (configured && status in setOf(WidgetStatus.FAILED, WidgetStatus.CHECK_FAILED, WidgetStatus.NOT_CONFIGURED)) {
         Color(0xFFFFB4AB)
     } else {
         Color(0xFF9CE8CE)

@@ -57,6 +57,7 @@ fun WakeScreen(
     onWakeApiTokenChange: (String) -> Unit,
     onTestConnection: () -> Unit,
     onWake: () -> Unit,
+    onCheckAgain: () -> Unit,
     onOpenSettings: () -> Unit,
     onCancelSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -105,7 +106,7 @@ fun WakeScreen(
                         onCancelSettings = onCancelSettings,
                     )
                 } else {
-                    ReadyContent(state, onWake, onOpenSettings)
+                    ReadyContent(state, onWake, onCheckAgain, onOpenSettings)
                 }
             }
         }
@@ -245,6 +246,7 @@ private fun SecretField(
 private fun ReadyContent(
     state: WakeUiState,
     onWake: () -> Unit,
+    onCheckAgain: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -264,9 +266,14 @@ private fun ReadyContent(
         modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 18.dp),
     ) {
-        Text(if (state.isBusy) "Sending…" else "Wake gianRTX", style = MaterialTheme.typography.titleMedium)
+        Text(if (state.isBusy) "Please wait…" else "Wake gianRTX", style = MaterialTheme.typography.titleMedium)
     }
     StatusMessage(state.message, state.isError)
+    if (state.canCheckAgain) {
+        TextButton(onClick = onCheckAgain, enabled = !state.isBusy) {
+            Text("Check again")
+        }
+    }
     Spacer(Modifier.height(24.dp))
     Text(
         "For one-tap access, add the WakeBridge widget from your home screen's widget picker.",
