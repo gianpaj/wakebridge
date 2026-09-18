@@ -10,7 +10,11 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.Button
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.appWidgetBackground
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.action.Action
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
@@ -21,6 +25,9 @@ import androidx.glance.background
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
+import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
@@ -31,16 +38,17 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.gianpaj.wakebridge.MainActivity
+import dev.gianpaj.wakebridge.R
 import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
 
 internal val widgetStatusKey = stringPreferencesKey("wake_status")
 
 enum class WidgetStatus(val label: String) {
-    READY("⚡ WAKE"),
+    READY("Tap to wake"),
     SENDING("Sending…"),
-    SENT("Sent ✓"),
-    FAILED("Failed"),
-    SETUP_REQUIRED("Setup required"),
+    SENT("Sent · wake again"),
+    FAILED("Failed · retry"),
+    SETUP_REQUIRED("Tap to set up"),
 }
 
 class WakeBridgeWidget : GlanceAppWidget() {
@@ -69,30 +77,45 @@ private fun WidgetContent(
     status: WidgetStatus,
     setupAction: Action,
 ) {
-    Column(
+    val action = if (configured) actionRunCallback<WakeAction>() else setupAction
+    val isSending = configured && status == WidgetStatus.SENDING
+    val accent = if (configured && status == WidgetStatus.FAILED) {
+        Color(0xFFFFB4AB)
+    } else {
+        Color(0xFF9CE8CE)
+    }
+    Row(
         modifier = GlanceModifier
             .fillMaxSize()
+            .appWidgetBackground()
             .background(ColorProvider(Color(0xFF172033)))
-            .padding(16.dp),
+            .cornerRadius(24.dp)
+            .then(if (isSending) GlanceModifier else GlanceModifier.clickable(action))
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "gianRTX",
-            style = TextStyle(
-                color = ColorProvider(Color.White),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            ),
+        Image(
+            provider = ImageProvider(R.drawable.ic_power),
+            contentDescription = null,
+            modifier = GlanceModifier.size(28.dp),
         )
-        Spacer(GlanceModifier.height(10.dp))
-        Button(
-            text = if (configured) status.label else WidgetStatus.SETUP_REQUIRED.label,
-            onClick = if (configured) {
-                actionRunCallback<WakeAction>()
-            } else {
-                setupAction
-            },
-        )
+        Spacer(GlanceModifier.width(12.dp))
+        Column(modifier = GlanceModifier.defaultWeight()) {
+            Text(
+                text = "gianRTX",
+                style = TextStyle(
+                    color = ColorProvider(Color.White),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                maxLines = 1,
+            )
+            Spacer(GlanceModifier.height(4.dp))
+            Text(
+                text = if (configured) status.label else WidgetStatus.SETUP_REQUIRED.label,
+                style = TextStyle(color = ColorProvider(accent), fontSize = 14.sp),
+                maxLines = 1,
+            )
+        }
     }
 }

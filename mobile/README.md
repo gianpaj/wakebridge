@@ -63,7 +63,7 @@ Cloudflare credentials are optional as a pair. Enter both or leave both blank.
 The Wake API token is always required. The app rejects HTTP URLs, URLs with
 embedded credentials, query strings, and fragments.
 
-Tap **Test Connection**. The app sends only `GET /health`; it never wakes
+Tap **Test & save connection**. The app sends only `GET /health`; it never wakes
 gianRTX during setup. A successful response saves the normalized configuration
 and enables both wake buttons. Failed or invalid first-time setup leaves them
 disabled.
@@ -86,13 +86,15 @@ does not log URLs, tokens, client IDs, client secrets, or authorization headers.
 ## Home-screen widget
 
 Add **WakeBridge** from the Android widget picker after installing the app.
+The whole tile is the tap target. Its two-line layout leaves room for larger
+text, and the widget can be resized in either direction.
 
-- Before a successful connection test, the widget says **Setup required** and
+- Before a successful connection test, the widget says **Tap to set up** and
   opens the app.
 - After setup, one tap changes the widget to **Sending…** and enqueues one
   network-constrained WorkManager job.
 - The worker reads secure storage and sends one authenticated `POST /wake`.
-- Success leaves **Sent ✓**; failure leaves **Failed**.
+- Success leaves **Sent · wake again**; failure leaves **Failed · retry**.
 
 Unique work plus a two-second tap gate ignores rapid duplicate taps. The worker
 does not retry a failed or ambiguous response because a retry could duplicate a
