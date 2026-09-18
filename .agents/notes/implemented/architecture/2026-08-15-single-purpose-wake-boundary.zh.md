@@ -8,11 +8,11 @@ Status: implemented
 
 ## Decision
 
-仓库交付两个独立组件，它们只通过包含两个操作的 HTTP 契约连接。Kotlin Multiplatform 客户端可以用 `GET /health` 测试连接，也可以用 `POST /wake` 请求唤醒。Go 服务端把固定的唤醒请求映射到启动时已验证的唯一 MAC 地址、IPv4 广播地址和 UDP 端口。调用方不能选择目标，也不能提供任何在服务端执行的数据。
+仓库交付两个独立组件，它们只通过HTTP 契约连接。Kotlin Multiplatform 客户端可以用 `GET /health` 测试连接，用 `POST /wake` 请求唤醒，并用 `GET /status` 检查目标状态。Go 服务端把固定的唤醒请求映射到启动时已验证的唯一 MAC 地址、IPv4 广播地址和 UDP 端口。调用方不能选择目标，也不能提供任何在服务端执行的数据。
 
 Cloudflare Access 对公网 HTTPS 请求进行认证，Tunnel 将请求转发到 Go 服务的回环监听地址。Go 服务不了解 Cloudflare，并要求独立的 Bearer Token。客户端拒绝明文 HTTP 和重定向；Android 使用不可导出的 Android Keystore 密钥加密已测试的配置。
 
-Glance 小组件不会把凭据放入小组件状态或 WorkManager 输入。操作回调会加入一个具有唯一名称和网络约束的任务；Worker 解密配置并发出一次请求。它只记录少量显示状态，并且不会重试结果不明确的唤醒响应。
+Glance 小组件不会把凭据放入小组件状态或 WorkManager 输入。操作回调会加入一个具有唯一名称和网络约束的任务；Worker 解密配置、发送一次唤醒请求，并轮询目标状态。详见[启动确认](2026-09-18-startup-confirmation.md)。它只记录少量显示状态，并且不会重试结果不明确的唤醒响应。
 
 ## Runtime boundaries
 
@@ -28,7 +28,7 @@ Glance 小组件不会把凭据放入小组件状态或 WorkManager 输入。操
 
 **仅通过 VPN 访问。** Tailscale 或其他 VPN 可以保护路由，但 V1 的成功条件要求手机不使用 VPN，通过普通蜂窝网络点击小组件。Cloudflare Access 和应用 Token 提供两层检查。
 
-**永久 Android 服务或自动重试请求。** 单个短请求不需要永久服务。响应丢失后重试可能在首次请求已到达服务端时再次发送命令，因此 WorkManager 只尝试一次，并把失败留给用户手动处理。
+**永久 Android 服务或自动重试请求。** 有时间上限的唤醒和状态检查不需要永久服务。响应丢失后重试可能在首次请求已到达服务端时再次发送命令，因此 WorkManager 只尝试一次，并把失败留给用户手动处理。
 
 ## Verification
 
@@ -38,6 +38,6 @@ Go 测试覆盖启动配置验证、Magic Packet 字节、认证、路由、HTTP
 
 ## Consequences
 
-系统的心智模型和攻击面都很小：一个公网主机名、一个应用密钥、一个配置目标和一个操作。Go 服务不需要 root 权限或持久数据，Android 小组件也不需要常驻进程。
+系统的心智模型和攻击面都很小：一个公网主机名、一个应用密钥、一个配置目标，以及唤醒和状态检查操作。Go 服务不需要 root 权限或持久数据，Android 小组件也不需要常驻进程。
 
-代价是有意的刚性。增加另一台机器、检查 gianRTX 是否在线、确认实际启动、重试发送，或支持 iOS 安全存储和 WidgetKit，都需要后续决策。系统还依赖 Jetson、Cloudflare Tunnel、Access 策略和 gianRTX 的 Wake-on-LAN 支持持续保持正确配置。
+代价是有意的刚性。增加另一台机器、验证应用是否就绪、重试发送，或支持 iOS 安全存储和 WidgetKit，都需要后续决策。系统还依赖 Jetson、Cloudflare Tunnel、Access 策略和 gianRTX 的 Wake-on-LAN 支持持续保持正确配置。

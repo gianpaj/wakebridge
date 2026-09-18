@@ -86,7 +86,7 @@ func validateAddress(address string) error {
 		return errors.New("must use host:port form")
 	}
 	if strings.TrimSpace(host) == "" || strings.ContainsAny(host, " \t\r\n/") {
-		return errors.New("host must not be empty")
+		return errors.New("host must not be empty or contain whitespace or slashes")
 	}
 	port, err := strconv.Atoi(portText)
 	if err != nil || port < 1 || port > 65535 {
