@@ -102,3 +102,20 @@ func TestLoadRejectsMissingAndMalformedValues(t *testing.T) {
 func mapGetter(values map[string]string) func(string) string {
 	return func(key string) string { return values[key] }
 }
+
+func TestSSHAddress(t *testing.T) {
+	for _, address := range []string{"", "192.168.1.100:22", "gianRTX:22", "[::1]:22", "missing-port", ":22", "host:0", "host:65536", "bad host:22"} {
+		t.Run(address, func(t *testing.T) {
+			values := map[string]string{"WAKE_API_TOKEN": "secret", "GIANRTX_MAC": "00:11:22:33:44:55", "WOL_BROADCAST": "192.168.1.255", "GIANRTX_SSH_ADDR": address}
+			cfg, err := Load(mapGetter(values))
+			valid := address == "" || address == "192.168.1.100:22" || address == "gianRTX:22" || address == "[::1]:22"
+			if valid {
+				if err != nil || cfg.SSHAddr != address {
+					t.Fatalf("Load() = %+v, %v", cfg, err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), "GIANRTX_SSH_ADDR") {
+				t.Fatalf("error = %v", err)
+			}
+		})
+	}
+}

@@ -24,7 +24,7 @@ gianRTX
 ```
 
 The system exposes no shell, remote shutdown, arbitrary target, or host lookup.
-The client can request only `wake`; the Jetson decides the one MAC address,
+The client can request wake and status checks; the Jetson decides the MAC address,
 broadcast address, and UDP port that operation means.
 
 ## Repository
@@ -82,6 +82,23 @@ The server returns:
 
 Cloudflare may reject a request before it reaches this API. A `200` wake
 response confirms packet transmission, not that gianRTX finished booting.
+
+### Target status
+
+`GET /status` uses the same authentication headers as `/wake` and returns:
+
+```json
+{"ok": true, "target": "gianRTX", "online": true}
+```
+
+The Go server attempts one TCP connection to `GIANRTX_SSH_ADDR`, with a
+one-second timeout, and closes it immediately. `online` means that port accepts
+connections; it does not confirm SSH authentication or application readiness.
+A refused connection, timeout, or unreachable network returns `online: false`.
+Other probe errors return `503` with `status check failed`; an unset address
+returns `503` with `status not configured`. The response is not cacheable.
+The client cannot select the destination, and checking status never sends a
+wake packet. `/health` checks only the WakeBridge service.
 
 ## Cloudflare's role
 

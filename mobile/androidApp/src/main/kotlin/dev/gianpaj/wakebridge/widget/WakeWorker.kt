@@ -1,10 +1,16 @@
 package dev.gianpaj.wakebridge.widget
 
 import android.content.Context
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import dev.gianpaj.wakebridge.shared.ApiError
+import dev.gianpaj.wakebridge.shared.OnlineResult
+import dev.gianpaj.wakebridge.shared.awaitOnline
 import dev.gianpaj.wakebridge.shared.ApiResult
 import dev.gianpaj.wakebridge.shared.WakeApiFactory
 import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
@@ -21,14 +27,32 @@ class WakeWorker(
         }
 
         val api = WakeApiFactory.create(configuration)
-        val result = try {
-            api.wake()
+        try {
+            val checkOnly = inputData.getBoolean(CHECK_ONLY, false)
+            if (!checkOnly) {
+                if (api.wake() is ApiResult.Failure) {
+                    updateWidgets(WidgetStatus.FAILED)
+                    return Result.success()
+                }
+            }
+            updateWidgets(if (checkOnly) WidgetStatus.CHECKING else WidgetStatus.WAKING)
+            val status = when (val result = api.awaitOnline()) {
+                OnlineResult.Online -> WidgetStatus.ONLINE
+                OnlineResult.TimedOut -> WidgetStatus.TIMED_OUT
+                is OnlineResult.Failed -> if (result.error == ApiError.StatusNotConfigured) {
+                    WidgetStatus.NOT_CONFIGURED
+                } else {
+                    WidgetStatus.CHECK_FAILED
+                }
+            }
+            updateWidgets(status)
+        } catch (cancelled: CancellationException) {
+            // Leave a check-only action if Android stops the worker mid-poll.
+            withContext(NonCancellable) { updateWidgets(WidgetStatus.CHECK_FAILED) }
+            throw cancelled
         } finally {
             api.close()
         }
-        updateWidgets(
-            if (result is ApiResult.Success) WidgetStatus.SENT else WidgetStatus.FAILED,
-        )
 
         // A retry could duplicate an accepted wake request if the response was lost.
         return Result.success()

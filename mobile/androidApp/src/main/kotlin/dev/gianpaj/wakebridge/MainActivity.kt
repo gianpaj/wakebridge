@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
                     onWakeApiTokenChange = viewModel::updateWakeApiToken,
                     onTestConnection = viewModel::testConnection,
                     onWake = viewModel::wake,
+                    onCheckAgain = viewModel::checkAgain,
                     onOpenSettings = viewModel::openSettings,
                     onCancelSettings = viewModel::cancelSettings,
                 )

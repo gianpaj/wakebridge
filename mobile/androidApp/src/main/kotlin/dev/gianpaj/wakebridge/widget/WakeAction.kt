@@ -12,7 +12,11 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import dev.gianpaj.wakebridge.storage.SecureConfigurationStore
+
+internal val checkOnlyParameter = ActionParameters.Key<Boolean>("check_only")
+internal const val CHECK_ONLY = "check_only"
 
 class WakeAction : ActionCallback {
     override suspend fun onAction(
@@ -27,10 +31,12 @@ class WakeAction : ActionCallback {
         }
         if (!WidgetWakeGate.tryAcquire(context)) return
 
-        setWidgetStatus(context, glanceId, WidgetStatus.SENDING)
+        val checkOnly = parameters[checkOnlyParameter] ?: false
+        setWidgetStatus(context, glanceId, if (checkOnly) WidgetStatus.CHECKING else WidgetStatus.SENDING)
         WakeBridgeWidget().update(context, glanceId)
 
         val request = OneTimeWorkRequestBuilder<WakeWorker>()
+            .setInputData(workDataOf(CHECK_ONLY to checkOnly))
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)

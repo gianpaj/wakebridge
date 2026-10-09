@@ -1,7 +1,6 @@
 # WakeBridge server
 
-`server-go` is WakeBridge's Jetson-side service. It accepts one authenticated
-operation, builds a Wake-on-LAN magic packet for the configured gianRTX MAC
+`server-go` is WakeBridge's Jetson-side service. It accepts authenticated wake and status requests, builds a Wake-on-LAN magic packet for the configured gianRTX MAC
 address, and sends that packet to the configured LAN broadcast address. It has
 no database, web framework, command runner, or client-selectable target.
 
@@ -41,6 +40,7 @@ Copy `examples/wakebridge.env.example` to a local file and set:
 | `WOL_BROADCAST` | yes | IPv4 broadcast address, such as `192.168.1.255` |
 | `LISTEN_ADDR` | no | HTTP listen address; default `127.0.0.1:8787` |
 | `WOL_PORT` | no | UDP destination port; default `9` |
+| `GIANRTX_SSH_ADDR` | no | gianRTX LAN host:port, such as `192.168.1.100:22`; enables startup checks |
 
 The server rejects missing or malformed settings before it starts. It validates
 the MAC address, IPv4 address, listen address, and UDP port. Logs never include
@@ -132,3 +132,20 @@ If HTTP succeeds but gianRTX stays off, check the physical path:
 
 The final power-state test depends on gianRTX hardware and firmware and cannot
 be replaced by the unit tests.
+
+## Startup confirmation
+
+Set `GIANRTX_SSH_ADDR` in `/etc/wakebridge.env` and restart `wakebridge.service`.
+Use a DHCP reservation for gianRTX's wired LAN address. No SSH credentials,
+key files, extra privileges, or software on gianRTX are required. An unset
+address leaves wake requests available but disables target status checks.
+
+See the root [HTTP contract](../README.md#target-status) for `/status` responses.
+Verify from the Jetson with an authenticated request:
+
+```bash
+curl --fail --header "Authorization: Bearer $WAKE_API_TOKEN" http://127.0.0.1:8787/status
+```
+
+Confirm `online: true` while SSH listens and `online: false` while gianRTX is
+asleep. A successful port connection does not prove which service is listening.

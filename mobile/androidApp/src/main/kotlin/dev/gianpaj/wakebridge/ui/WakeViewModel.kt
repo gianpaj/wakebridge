@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dev.gianpaj.wakebridge.shared.OnlineResult
+import dev.gianpaj.wakebridge.shared.awaitOnline
 import dev.gianpaj.wakebridge.shared.ApiError
 import dev.gianpaj.wakebridge.shared.ApiResult
 import dev.gianpaj.wakebridge.shared.ConfigurationError
@@ -31,6 +33,7 @@ data class WakeUiState(
     val isBusy: Boolean = true,
     val message: String? = null,
     val isError: Boolean = false,
+    val canCheckAgain: Boolean = false,
 )
 
 class WakeViewModel(
@@ -117,27 +120,53 @@ class WakeViewModel(
         }
     }
 
-    fun wake() {
+    fun wake() = checkStartup(sendWake = true)
+
+    fun checkAgain() = checkStartup(sendWake = false)
+
+    private fun checkStartup(sendWake: Boolean) {
         val configuration = savedConfiguration ?: return
         if (_state.value.isBusy || _state.value.isEditing) return
-
+        _state.update {
+            it.copy(
+                isBusy = true,
+                canCheckAgain = false,
+                message = if (sendWake) "Sending…" else "Checking gianRTX…",
+                isError = false,
+            )
+        }
         viewModelScope.launch {
-            _state.update { it.copy(isBusy = true, message = "Sending…", isError = false) }
             val api = WakeApiFactory.create(configuration)
-            val result = try {
-                api.wake()
+            try {
+                if (sendWake) {
+                    val wake = api.wake()
+                    if (wake is ApiResult.Failure) {
+                        _state.update { it.copy(message = wake.error.message(), isError = true) }
+                        return@launch
+                    }
+                    _state.update { it.copy(message = "Waking gianRTX…") }
+                }
+                val result = api.awaitOnline()
+                _state.update {
+                    it.copy(
+                        canCheckAgain = result != OnlineResult.Online,
+                        isError = result is OnlineResult.Failed,
+                        message = when (result) {
+                            OnlineResult.Online -> "gianRTX is online"
+                            OnlineResult.TimedOut -> if (sendWake) {
+                                "Wake command sent, but gianRTX hasn’t responded yet"
+                            } else {
+                                "gianRTX hasn’t responded yet"
+                            }
+                            is OnlineResult.Failed ->
+                                (if (sendWake) "Wake command sent. " else "") +
+                                    "Couldn’t check status. " + result.error.message()
+                        },
+                    )
+                }
             } finally {
                 api.close()
-            }
-            _state.update {
-                it.copy(
-                    isBusy = false,
-                    isError = result is ApiResult.Failure,
-                    message = when (result) {
-                        is ApiResult.Success -> "Wake command sent"
-                        is ApiResult.Failure -> result.error.message()
-                    },
-                )
+                _state.update { it.copy(isBusy = false) }
             }
         }
     }
@@ -185,6 +214,7 @@ class WakeViewModel(
         ApiError.WakeTokenRejected -> "Wake API token was rejected"
         is ApiError.ServerRejected -> "Server rejected request (HTTP $status)"
         ApiError.WakePacketFailed -> "Server could not send the Wake-on-LAN packet"
+        ApiError.StatusNotConfigured -> "Startup checks are not configured on the wake server"
         ApiError.UnexpectedResponse -> "Unexpected server response"
     }
 

@@ -6,15 +6,15 @@ Status: implemented
 
 Waking gianRTX from an untrusted mobile network requires crossing the public
 internet into a private LAN. A general remote-control service would add targets,
-commands, credentials, and failure modes that this one-operation system does not
+commands, credentials, and failure modes that this single-target system does not
 need. The Android widget also needs short, reliable asynchronous execution
 without turning the app into a permanent background service.
 
 ## Decision
 
-The repository ships two independent components joined only by a two-operation
-HTTP contract. The Kotlin Multiplatform client can test `GET /health` and request
-`POST /wake`. The Go server maps that fixed wake request to one startup-validated
+The repository ships two independent components joined by an
+HTTP contract. The Kotlin Multiplatform client can test `GET /health`, request
+`POST /wake`, and check `GET /status`. The Go server maps that fixed wake request to one startup-validated
 MAC address, IPv4 broadcast address, and UDP port. No caller can select a target
 or provide server-side execution data.
 
@@ -26,8 +26,9 @@ Android Keystore key.
 
 The Glance widget places no credentials in widget state or WorkManager input. An
 action callback enqueues uniquely named, network-constrained work; the worker
-decrypts configuration and makes one request. It records a small display status
-and never retries an ambiguous wake response.
+decrypts configuration, sends one wake request, and polls target status. It
+records a small display status and never automatically retries an ambiguous
+wake response. See [startup confirmation](2026-09-18-startup-confirmation.md).
 
 ## Runtime boundaries
 
@@ -55,7 +56,7 @@ success condition requires a widget tap over ordinary cellular data without a
 phone VPN. Cloudflare Access and the application token provide two checks.
 
 **A permanent Android service or automatic request retries.** A permanent
-service is unnecessary for one short request. Retrying after a lost response can
+service is unnecessary for a bounded wake-and-check operation. Retrying after a lost response can
 send a second command even when the first reached the server, so WorkManager
 performs one attempt and reports failure for manual action.
 
@@ -73,12 +74,12 @@ firmware, and powered network adapter.
 ## Consequences
 
 The system has a small mental model and a narrow attack surface: one public
-hostname, one application secret, one configured target, and one action. The Go
+hostname, one application secret, one configured target, and wake/status operations. The Go
 service needs no root privilege or persistent data, and the Android widget needs
 no resident process.
 
-The trade-off is intentional rigidity. Adding another machine, checking whether
-gianRTX is awake, confirming actual boot, retrying delivery, or supporting iOS
+The trade-off is intentional rigidity. Adding another machine, verifying application
+readiness, retrying delivery, or supporting iOS
 secure storage and WidgetKit requires later decisions. The system also depends
 on the Jetson, Cloudflare Tunnel, Access policy, and gianRTX Wake-on-LAN support
 remaining correctly configured.
