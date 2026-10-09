@@ -52,6 +52,10 @@ Validate the iOS shared target on macOS with:
 
 ## Configure Android
 
+For a fixed public hostname, complete the optional
+[permanent Cloudflare Tunnel setup](../server-go/README.md#cloudflare-tunnel)
+on the Jetson first. It includes the Access policy needed by the app and widget.
+
 Open the app and enter:
 
 - the HTTPS origin, such as `https://wake.example.com`;

@@ -102,20 +102,100 @@ packets. It does not prove that gianRTX reached an awake state.
 
 ## Cloudflare Tunnel
 
-Cloudflare remains outside this process. Configure `cloudflared` separately so
-one protected public hostname reaches the loopback listener:
+The optional tunnel gives WakeBridge a stable HTTPS origin such as
+`https://wake.example.com`. Use a named tunnel; Quick Tunnels generate temporary
+hostnames. `cloudflared` runs separately from `wakebridge.service` on the Jetson.
+WakeBridge does not create or manage tunnels.
 
-```yaml
-ingress:
-  - hostname: wake.example.com
-    service: http://127.0.0.1:8787
-  - service: http_status:404
+You need a domain on Cloudflare, an always-on Jetson with Internet access, and a
+working local `/health` response. Keep `LISTEN_ADDR=127.0.0.1:8787`; no router
+port forwarding is needed. Without the tunnel, the Go service still works
+locally. The Android app requires HTTPS, so remote use needs this tunnel or
+another protected HTTPS route.
+
+### Protect the hostname
+
+Before publishing the route, configure Cloudflare Access for the entire
+`wake.example.com` hostname, including `/health`, `/wake`, and `/status`:
+
+1. Create an Access service token for the phone. Save its client ID and secret
+   and record its expiry date.
+2. Create a self-hosted Access application for the hostname with no path filter.
+3. Add a **Service Auth** policy whose **Include → Service Token** rule selects
+   that token. Avoid bypass policies. Interactive browser login does not work
+   for the widget; the app refuses redirects.
+
+See Cloudflare's [service-token instructions](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/).
+Renew the token before expiry and update the phone if its credentials change.
+
+### Install the permanent connector
+
+Follow the [Cloudflare Tunnel setup guide](https://developers.cloudflare.com/tunnel/get-started/):
+
+1. In **Networking → Tunnels**, create a named tunnel such as `wakebridge`.
+2. Select Linux and the Jetson's architecture (ARM64 for the installation above).
+   Run the dashboard's install commands on the Jetson, including the
+   `sudo cloudflared service install <TUNNEL_TOKEN>` command with its supplied
+   token. Keep that token on the server; it is not a mobile credential.
+3. Wait for the tunnel to report **Healthy**. Add a **Published application**
+   route for `wake.example.com` with service URL `http://127.0.0.1:8787` and no
+   path filter. Confirm the hostname's DNS record points to this tunnel.
+
+Enable startup at boot and check the connector:
+
+```bash
+sudo systemctl enable --now cloudflared
+sudo systemctl status cloudflared
+sudo journalctl -u cloudflared -n 50 --no-pager
 ```
 
-Protect `wake.example.com` with Cloudflare Access. Create a service token for
-the mobile client when the Access policy requires it. The app sends the
-`CF-Access-Client-Id` and `CF-Access-Client-Secret` headers to Cloudflare; the Go
-server only validates its separate bearer token.
+Both `cloudflared` and `wakebridge.service` must run on the always-on Jetson,
+not on the PC being woken. The named tunnel and DNS route retain the hostname
+across connector restarts.
+
+### Verify without waking the PC
+
+Load the Access client ID and secret into shell variables, replace the example
+hostname, then request health:
+
+```bash
+curl --fail --show-error \
+  --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+  --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+  https://wake.example.com/health
+```
+
+Expect `{"ok":true}`. Repeat without the headers and confirm Access blocks or
+redirects the request instead of returning that JSON. Health checks do not send
+a magic packet or validate `WAKE_API_TOKEN`.
+
+In Android, enter the HTTPS origin, the Access client ID and secret, and the
+separate `WAKE_API_TOKEN` from `/etc/wakebridge.env`. Tap **Test & save connection**.
+The tunnel token, Access credentials, and Wake API token serve different roles;
+only the last two belong in the app.
+
+A `502` usually means the connector cannot reach the Go listener. An Access
+denial or login redirect calls for checking the service token and policy.
+A Go API `401` on `/wake` or `/status` calls for checking the Wake API token.
+
+### Turn the tunnel off or on
+
+On a Jetson where this connector serves only WakeBridge, disable remote access:
+
+```bash
+sudo systemctl disable --now cloudflared
+```
+
+Keep the named tunnel and DNS record to reuse the hostname. Restore access and
+startup at boot with:
+
+```bash
+sudo systemctl enable --now cloudflared
+```
+
+Stopping a shared connector affects all its routes. For a shared tunnel, remove
+only WakeBridge's published route instead. Neither operation stops the local
+Go service.
 
 ## Wake-on-LAN troubleshooting
 
