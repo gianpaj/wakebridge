@@ -117,6 +117,10 @@ The Go process does not implement Cloudflare APIs and does not receive
 Cloudflare configuration. Its bearer token remains a separate application-level
 check in case the Access or tunnel policy changes.
 
+The tunnel is optional deployment infrastructure. For a stable hostname and
+automatic startup, follow the [permanent tunnel setup](server-go/README.md#cloudflare-tunnel).
+Without it, remote Android access needs another protected HTTPS route.
+
 ## How Wake-on-LAN works here
 
 At startup, the server validates `GIANRTX_MAC`, `WOL_BROADCAST`, and `WOL_PORT`.
@@ -140,18 +144,18 @@ that support magic-packet wake.
    Enable `wakebridge.service` at boot.
 3. Verify `curl http://127.0.0.1:8787/health` on the Jetson, then make one local
    authenticated `/wake` request and confirm that the hardware wakes.
-4. Install and run `cloudflared` separately. Route a dedicated hostname to
-   `http://127.0.0.1:8787` and protect it with Cloudflare Access. Create a
-   service token for the Android client when the policy requires one.
+4. Follow the [permanent tunnel setup](server-go/README.md#cloudflare-tunnel)
+   to publish a fixed hostname with Cloudflare Access and a service token for
+   the Android client.
 5. Build and install the Android app. Enter the HTTPS hostname, Cloudflare
-   credentials, and Wake API token. Tap **Test Connection** and add the
+   credentials, and Wake API token. Tap **Test & save connection** and add the
    **WakeBridge** home-screen widget.
 6. Disable phone Wi-Fi and any VPN. On cellular data, tap the widget once. Check
    `journalctl -u wakebridge -f` for one successful request and confirm that
    gianRTX powers on.
 
 See [server-go/README.md](server-go/README.md) for Jetson installation and
-Cloudflare assumptions. See [mobile/README.md](mobile/README.md) for Android
+Cloudflare setup. See [mobile/README.md](mobile/README.md) for Android
 build, secure storage, widget behavior, and the iOS boundary.
 
 ## Development checks
