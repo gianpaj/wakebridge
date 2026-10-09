@@ -27,6 +27,16 @@ The system exposes no shell, remote shutdown, arbitrary target, or host lookup.
 The client can request wake and status checks; the Jetson decides the MAC address,
 broadcast address, and UDP port that operation means.
 
+## Android app
+
+<img src="docs/images/app-icon.svg" alt="WakeBridge adaptive icon: a yellow lightning bolt on a navy background" width="96">
+
+Adaptive launcher icon shown with a circular mask. The shape follows your launcher.
+
+Connection setup on a Pixel 6:
+
+<img src="docs/images/screenshot.png" alt="WakeBridge Android connection setup with server URL, wake API token, and Cloudflare Access fields" width="320">
+
 ## Repository
 
 ```text
@@ -51,7 +61,7 @@ CF-Access-Client-Secret: <client-secret>  # when Access requires it
 ```
 
 ```json
-{"ok": true}
+{ "ok": true }
 ```
 
 The Android setup screen uses this endpoint to validate HTTPS connectivity and
@@ -67,18 +77,18 @@ CF-Access-Client-Secret: <client-secret>  # when Access requires it
 ```
 
 ```json
-{"ok": true, "target": "gianRTX"}
+{ "ok": true, "target": "gianRTX" }
 ```
 
 The server returns:
 
-| Status | Meaning |
-| --- | --- |
-| `200` | The server sent the magic packet |
-| `401` | The local Wake API token is invalid |
-| `404` | The route is unknown |
-| `405` | The route does not allow that HTTP method |
-| `500` | The server could not send the Wake-on-LAN packet |
+| Status | Meaning                                          |
+| ------ | ------------------------------------------------ |
+| `200`  | The server sent the magic packet                 |
+| `401`  | The local Wake API token is invalid              |
+| `404`  | The route is unknown                             |
+| `405`  | The route does not allow that HTTP method        |
+| `500`  | The server could not send the Wake-on-LAN packet |
 
 Cloudflare may reject a request before it reaches this API. A `200` wake
 response confirms packet transmission, not that gianRTX finished booting.
@@ -88,7 +98,7 @@ response confirms packet transmission, not that gianRTX finished booting.
 `GET /status` uses the same authentication headers as `/wake` and returns:
 
 ```json
-{"ok": true, "target": "gianRTX", "online": true}
+{ "ok": true, "target": "gianRTX", "online": true }
 ```
 
 The Go server attempts one TCP connection to `GIANRTX_SSH_ADDR`, with a
