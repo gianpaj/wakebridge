@@ -170,7 +170,8 @@ redirects the request instead of returning that JSON. Health checks do not send
 a magic packet or validate `WAKE_API_TOKEN`.
 
 In Android, enter the HTTPS origin, the Access client ID and secret, and the
-separate `WAKE_API_TOKEN` from `/etc/wakebridge.env`. Tap **Test & save connection**.
+separate `WAKE_API_TOKEN` from `/etc/wakebridge.env`. Tap **Test & save connection**;
+it calls `/status`, so a wrong token fails here instead of on the first wake.
 The tunnel token, Access credentials, and Wake API token serve different roles;
 only the last two belong in the app.
 
