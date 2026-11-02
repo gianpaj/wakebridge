@@ -67,8 +67,8 @@ Cloudflare credentials are optional as a pair. Enter both or leave both blank.
 The Wake API token is always required. The app rejects HTTP URLs, URLs with
 embedded credentials, query strings, and fragments.
 
-Tap **Test & save connection**. The app sends only `GET /health`; it never wakes
-gianRTX during setup. A successful response saves the normalized configuration
+Tap **Test & save connection**. The app sends only `GET /status`, which checks
+the Wake API token; it never wakes gianRTX during setup. A successful response saves the normalized configuration
 and enables both wake buttons. Failed or invalid first-time setup leaves them
 disabled.
 

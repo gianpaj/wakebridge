@@ -92,13 +92,17 @@ class WakeViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isBusy = true, message = null, isError = false) }
             val api = WakeApiFactory.create(configuration)
+            // /status checks the Wake API token; /health does not. A server
+            // without a status target still authenticates before saying so.
             val result = try {
-                api.healthCheck()
+                api.status()
             } finally {
                 api.close()
             }
+            val tokenAccepted = result is ApiResult.Success ||
+                (result as ApiResult.Failure).error == ApiError.StatusNotConfigured
 
-            if (result is ApiResult.Success) {
+            if (tokenAccepted) {
                 try {
                     configurationStore.save(configuration)
                     savedConfiguration = configuration
